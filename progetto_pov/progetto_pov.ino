@@ -16,6 +16,13 @@
  * code written by Palak Mehta on March 29,2019
 */
 ////////////////////////design a pattern of display the number and alphabates//////////////////////////////// 
+#include <ESP8266WiFi.h>
+#include <WiFiClient.h>
+
+// Hardcode WiFi parameters as this isn't going to be moving around.
+const char* ssid = "ELETTRONICO_CDS2022_1";
+const char* password = "cds2022_1";
+char frase[] = "_MANI_ABILI_";
 
  int NUMBER9[]={1,1,1,1,0,0,0,1, 1,0,0,1,0,0,0,1, 1,0,0,1,0,0,0,1, 1,0,0,1,0,0,0,1, 1,1,1,1,1,1,1,1};
  int NUMBER8[]={0,1,1,0,1,1,1,0, 1,0,0,1,0,0,0,1, 1,0,0,1,0,0,0,1, 1,0,0,1,0,0,0,1, 0,1,1,0,1,1,1,0};
@@ -60,6 +67,8 @@
  int letterSpace;
  int delayTime;
 
+WiFiServer server(1235);
+
 
  int pin[]={16,5,4,0,2,14,12,13};
  void setup()
@@ -71,6 +80,15 @@
            }     
           letterSpace =4;// defining the space between the letters (ms)         
          delayTime =1;// defining the time dots appear (ms)
+         WiFi.softAP(ssid, password);
+          delay(1000);
+          IPAddress myIP = WiFi.softAPIP();
+          Serial.print("AP IP address: ");
+          Serial.println(myIP);
+
+         // Start the TCP server
+         server.begin();
+
 }
 
 
@@ -154,9 +172,25 @@ void stampacarattere (char carattere)
 }
  void loop()
  {
-    char frase[] = "_MANI_ABILI_";
     
-    for(int y = 0; y<strlen(frase); y++) {
+    
+  for(int y = 0; y<strlen(frase); y++) {
            stampacarattere(frase[y]);
            }
+   WiFiClient client = server.available();
+   
+  if (client){
+    while (client.connected()) {
+      int y=0;
+      while (client.available()) {
+        char c = client.read();
+        Serial.write(c);
+        frase[y] =  c;
+        y=y+1;     
+      }
+     }
+     client.stop();
+     Serial.println("Client disconnected"); 
+  }
+
 }
